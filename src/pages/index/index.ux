@@ -1,0 +1,88 @@
+<template>
+  <div class="page" @swipe="ban">
+    <image id="home-bg" static class="home-background" src="/common/images/cover.png"></image>
+    <image static class="home-logo" src="/common/images/logo.png"></image>
+    <text class="game-title">{{title}}</text>
+
+    <div class="home-panel">
+      <text class="resume-copy">{{resumeCopy}}</text>
+      <text class="primary-action" @click="continueGame">{{primaryAction}}</text>
+      <div class="secondary-row">
+        <text class="secondary-action" @click="startGame">新游戏</text>
+        <text class="secondary-action" @click="openSaves">存档</text>
+      </div>
+      <div class="action-row">
+        <text class="compact-action" @click="openSettings">设置</text>
+        <text class="compact-action" @click="openGallery">CG</text>
+      </div>
+      <text class="exit-action" @click="exit">退出</text>
+    </div>
+  </div>
+</template>
+
+<script>
+import router from '@system.router'
+import storage from '@system.storage'
+import game from '../../common/game-config.js'
+
+export default {
+  private: { title: game.title, autoSaveData: null, resumeCopy: '新的故事即将开始', primaryAction: '开始阅读' },
+  onInit() { this.refreshAutoSave() },
+  onShow() { this.refreshAutoSave() },
+  refreshAutoSave() {
+    this.autoSaveData = null
+    storage.get({
+      key: 'autoSave',
+      success: (data) => {
+        try {
+          const saved = JSON.parse(data)
+          if (saved && saved.currentScnId) this.autoSaveData = saved
+        } catch (error) {}
+        this.refreshResumeState()
+      },
+      fail: () => this.refreshResumeState()
+    })
+  },
+  refreshResumeState() {
+    if (this.autoSaveData) {
+      this.resumeCopy = `进度 · ${this.autoSaveData.currentChapterName || '共通篇'}`
+      this.primaryAction = '继续阅读'
+      return
+    }
+    this.resumeCopy = '新的故事即将开始'
+    this.primaryAction = '开始阅读'
+  },
+  continueGame() {
+    if (this.autoSaveData) return router.push({ uri: 'pages/detail', params: { auto: '1' } })
+    this.startGame()
+  },
+  startGame() { router.push({ uri: 'pages/detail' }) },
+  openSaves() { router.push({ uri: 'pages/saves', params: { mode: 'load' } }) },
+  openSettings() { router.push({ uri: 'pages/settings' }) },
+  openGallery() { router.push({ uri: 'pages/gallery' }) },
+  exit() { this.$app.exit() },
+  ban() {}
+}
+</script>
+
+<style>
+
+.page { width: 96px; height: 245px; overflow: hidden; background-color: #160f16; }
+.home-background { position: absolute; top: 0px; left: 0px; width: 96px; height: 245px; object-fit: cover; }
+.home-logo { position: absolute; top: 45.23px; left: 7.25px; width: 81.51px; height: 48.06px; object-fit: contain; }
+.game-title { position: absolute; top: 89.52px; left: 7.25px; width: 81.51px; color: #ffffff; font-size: 10.87px; font-weight: bold; text-align: center; }
+.home-panel { position: absolute; top: 133.81px; left: 0px; width: 96px; height: 111.19px; background-color: rgba(23,17,25,0.94); border-radius: 6.34px 6.34px 0px 0px; flex-direction: column; align-items: center; }
+.resume-copy { width: 96px; height: 9.42px; margin-top: 3.77px; color: #f5e1e8; font-size: 7.25px; font-weight: bold; text-align: center; text-overflow: ellipsis; lines: 1; }
+.primary-action { width: 79.7px; height: 23.56px; margin-top: 3.77px; background-color: #b95079; color: #ffffff; font-size: 10.87px; font-weight: bold; text-align: center; border-radius: 4.53px; }
+.secondary-row { width: 79.7px; height: 17.9px; margin-top: 2.83px; flex-direction: row; justify-content: space-between; }
+.secondary-action { width: 38.04px; height: 17.9px; background-color: #412536; color: #ffffff; font-size: 8.6px; font-weight: bold; text-align: center; border-radius: 4.53px; }
+.action-row { width: 79.7px; height: 17.9px; margin-top: 2.83px; flex-direction: row; justify-content: space-between; }
+.compact-action { width: 38.04px; height: 17.9px; background-color: #412536; color: #ffffff; font-size: 8.6px; font-weight: bold; text-align: center; border-radius: 4.53px; }
+.exit-action { width: 79.7px; height: 18.85px; margin-top: 3.77px; background-color: #302b33; color: #ffffff; font-size: 9.51px; font-weight: bold; text-align: center; border-radius: 4.53px; }
+.person-single { top: 2px; bottom: auto; left: -8.0px; width: 112px; height: 360px; }
+.person-duo-left { top: 0px; bottom: auto; left: -26px; width: 104px; height: 340px; }
+.person-duo-right { top: 0px; bottom: auto; left: 26px; width: 104px; height: 340px; }
+.person-trio-left { top: 0px; bottom: auto; left: -31px; width: 100px; height: 330px; }
+.person-trio-center { top: 0px; bottom: auto; left: -2px; width: 100px; height: 330px; }
+.person-trio-right { top: 0px; bottom: auto; left: 27px; width: 100px; height: 330px; }
+</style>

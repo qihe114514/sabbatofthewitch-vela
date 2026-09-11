@@ -1,0 +1,20 @@
+{
+  "id": "小米手环9",
+  "shape": "pill-shaped",
+  "physicalWidth": 192,
+  "physicalHeight": 490,
+  "designWidth": 96,
+  "designHeight": 245,
+  "characterCanvas": [
+    212,
+    520
+  ],
+  "background": [
+    192,
+    490
+  ],
+  "eventMax": [
+    192,
+    490
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "package": "cn.sabbatofthewitch.qihe",
+  "name": "魔女的夜宴",
+  "versionName": "2.0",
+  "versionCode": 18,
+  "minPlatformVersion": 1000,
+  "simulationVersion": "default",
+  "icon": "/common/images/icon.png",
+  "deviceTypeList": [
+    "watch"
+  ],
+  "features": [
+    {
+      "name": "system.router"
+    },
+    {
+      "name": "system.storage"
+    },
+    {
+      "name": "system.file"
+    },
+    {
+      "name": "system.prompt"
+    }
+  ],
+  "config": {
+    "logLevel": "off",
+    "designWidth": 96
+  },
+  "pages": [
+    "pages/index",
+    "pages/detail",
+    "pages/settings",
+    "pages/saves",
+    "pages/about",
+    "pages/gallery",
+    "pages/cg-viewer"
+  ],
+  "router": {
+    "entry": "pages/index",
+    "pages": {
+      "pages/index": {
+        "component": "index"
+      },
+      "pages/detail": {
+        "component": "detail"
+      },
+      "pages/settings": {
+        "component": "settings"
+      },
+      "pages/saves": {
+        "component": "saves"
+      },
+      "pages/about": {
+        "component": "about"
+      },
+      "pages/gallery": {
+        "component": "gallery"
+      },
+      "pages/cg-viewer": {
+        "component": "cg-viewer"
+      }
+    }
+  }
+}

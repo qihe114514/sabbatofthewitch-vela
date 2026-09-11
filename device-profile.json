@@ -1,0 +1,14 @@
+{
+  "name": "小米手环9",
+  "base": "环9Pro",
+  "shape": "pill-shaped",
+  "physical": [
+    192,
+    490
+  ],
+  "css": [
+    96,
+    245
+  ],
+  "version": 15
+}
