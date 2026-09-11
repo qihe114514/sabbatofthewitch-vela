@@ -1,0 +1,28 @@
+{
+  "budgetBytes": 15000000,
+  "requestedColors": "64",
+  "selectedColors": 64,
+  "estimatedRpkBytes": 8116774,
+  "estimates": {
+    "64": 8116774
+  },
+  "folders": {
+    "bg": {
+      "files": 99,
+      "bytes": 2877067
+    },
+    "ev": {
+      "files": 92,
+      "bytes": 3350961
+    },
+    "sd": {
+      "files": 1883,
+      "bytes": 1878495
+    },
+    "overlay": {
+      "files": 3,
+      "bytes": 10251
+    }
+  },
+  "installStable": true
+}
