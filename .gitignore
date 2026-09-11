@@ -1,0 +1,12 @@
+node_modules/
+build/
+dist/
+sign/
+*.rpk
+tmp-test.png
+diagnostic_*/
+tools/__pycache__/
+tools/runtime-assets-*/
+tools/unused-assets-backup-*/
+docs/资源索引.json
+docs/资源缺口.md

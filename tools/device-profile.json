@@ -1,0 +1,20 @@
+{
+  "id": "红米手表6",
+  "shape": "rect",
+  "physicalWidth": 432,
+  "physicalHeight": 514,
+  "designWidth": 216,
+  "designHeight": 257,
+  "characterCanvas": [
+    212,
+    520
+  ],
+  "background": [
+    432,
+    514
+  ],
+  "eventMax": [
+    432,
+    514
+  ]
+}
