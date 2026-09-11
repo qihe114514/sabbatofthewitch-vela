@@ -1,0 +1,233 @@
+{
+  "threshold": {
+    "meanDiffMax": 3,
+    "channelDiffMax": 8
+  },
+  "originalFiles": 1900,
+  "representativeFiles": 1883,
+  "mergedFiles": 17,
+  "mergedGroups": [
+    {
+      "kind": "face",
+      "contexts": [
+        [
+          "めぐる",
+          "制服のみ"
+        ]
+      ],
+      "representative": "ch_33e48da89e2c_face.png",
+      "merged": "ch_3f3c1f76035d_face.png",
+      "meanDiff": 0.0,
+      "maxDiff": 0
+    },
+    {
+      "kind": "face",
+      "contexts": [
+        [
+          "めぐる",
+          "制服のみ"
+        ]
+      ],
+      "representative": "ch_53b46ca8822d_face.png",
+      "merged": "ch_71f6e25a0048_face.png",
+      "meanDiff": 0.0,
+      "maxDiff": 0
+    },
+    {
+      "kind": "face",
+      "contexts": [
+        [
+          "めぐる",
+          "制服のみ"
+        ]
+      ],
+      "representative": "ch_7d8b8daebb96_face.png",
+      "merged": "ch_96fa92e2da04_face.png",
+      "meanDiff": 0.0,
+      "maxDiff": 0
+    },
+    {
+      "kind": "face",
+      "contexts": [
+        [
+          "めぐる",
+          "外着"
+        ]
+      ],
+      "representative": "ch_b1f0f5931de8_face.png",
+      "merged": "ch_e9432aababbe_face.png",
+      "meanDiff": 0.0,
+      "maxDiff": 0
+    },
+    {
+      "kind": "face",
+      "contexts": [
+        [
+          "寧々",
+          "制服"
+        ]
+      ],
+      "representative": "ch_39fa4d87a56d_face.png",
+      "merged": "ch_699360d8f1b6_face.png",
+      "meanDiff": 0.0,
+      "maxDiff": 0
+    },
+    {
+      "kind": "face",
+      "contexts": [
+        [
+          "寧々",
+          "制服"
+        ]
+      ],
+      "representative": "ch_587547cefb0c_face.png",
+      "merged": "ch_d45d689c8cd6_face.png",
+      "meanDiff": 0.0,
+      "maxDiff": 0
+    },
+    {
+      "kind": "face",
+      "contexts": [
+        [
+          "秀明",
+          "制服"
+        ]
+      ],
+      "representative": "ch_351c716386d0_face.png",
+      "merged": "ch_acb608cf54ab_face.png",
+      "meanDiff": 0.0,
+      "maxDiff": 0
+    },
+    {
+      "kind": "face",
+      "contexts": [
+        [
+          "紬",
+          "制服"
+        ]
+      ],
+      "representative": "ch_2ae70764e56e_face.png",
+      "merged": "ch_2ee729265358_face.png",
+      "meanDiff": 0.0,
+      "maxDiff": 0
+    },
+    {
+      "kind": "face",
+      "contexts": [
+        [
+          "紬",
+          "制服"
+        ]
+      ],
+      "representative": "ch_a4c421021beb_face.png",
+      "merged": "ch_c1786ef863e5_face.png",
+      "meanDiff": 0.0,
+      "maxDiff": 0
+    },
+    {
+      "kind": "face",
+      "contexts": [
+        [
+          "紬",
+          "制服"
+        ]
+      ],
+      "representative": "ch_0e5602789b35_face.png",
+      "merged": "ch_dcc1b8588ca9_face.png",
+      "meanDiff": 0.0,
+      "maxDiff": 0
+    },
+    {
+      "kind": "face",
+      "contexts": [
+        [
+          "紬",
+          "制服"
+        ]
+      ],
+      "representative": "ch_c78cfb4338f9_face.png",
+      "merged": "ch_f800f764715f_face.png",
+      "meanDiff": 0.0,
+      "maxDiff": 0
+    },
+    {
+      "kind": "face",
+      "contexts": [
+        [
+          "紬",
+          "制服"
+        ]
+      ],
+      "representative": "ch_d750af4001cf_face.png",
+      "merged": "ch_f851b8ea25a8_face.png",
+      "meanDiff": 0.0,
+      "maxDiff": 0
+    },
+    {
+      "kind": "face",
+      "contexts": [
+        [
+          "紬",
+          "私服"
+        ]
+      ],
+      "representative": "ch_8fa90da37b39_face.png",
+      "merged": "ch_9cc6bc798702_face.png",
+      "meanDiff": 0.0,
+      "maxDiff": 0
+    },
+    {
+      "kind": "face",
+      "contexts": [
+        [
+          "紬",
+          "私服"
+        ]
+      ],
+      "representative": "ch_1aaf09da7d1a_face.png",
+      "merged": "ch_aa84236f480c_face.png",
+      "meanDiff": 0.0,
+      "maxDiff": 0
+    },
+    {
+      "kind": "face",
+      "contexts": [
+        [
+          "紬",
+          "私服"
+        ]
+      ],
+      "representative": "ch_9730df109553_face.png",
+      "merged": "ch_c71b9321fac2_face.png",
+      "meanDiff": 0.0,
+      "maxDiff": 0
+    },
+    {
+      "kind": "face",
+      "contexts": [
+        [
+          "紬",
+          "魔女服"
+        ]
+      ],
+      "representative": "ch_7b05ca91b80a_face.png",
+      "merged": "ch_852dbabd591d_face.png",
+      "meanDiff": 0.0,
+      "maxDiff": 0
+    },
+    {
+      "kind": "face",
+      "contexts": [
+        [
+          "紬",
+          "魔女服"
+        ]
+      ],
+      "representative": "ch_8acd5937d6d5_face.png",
+      "merged": "ch_e04e9b7f935f_face.png",
+      "meanDiff": 0.0,
+      "maxDiff": 0
+    }
+  ],
+  "bytes": 1878495
+}

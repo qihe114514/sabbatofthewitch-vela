@@ -1,0 +1,1 @@
+{"nodeCount":3,"chunks":[{"start":0,"count":3,"file":"/common/story/chunks/story-000.txt"}],"chapters":[{"title":"示例章节","start":0}]}

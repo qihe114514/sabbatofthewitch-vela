@@ -1,0 +1,20 @@
+{
+  "name": "sanoba-witch-miband-10pro",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "validate:scn": "node tools/validate-scn.js",
+    "validate:device": "node tools/validate-device-assets.js",
+    "verify:rpk": "py -3 tools/verify-rpk.py",
+    "build:assets": "py -3 tools/build-runtime-assets.py",
+    "index:visual": "node tools/generate-character-map.js && node tools/index-visual-assets.js",
+    "check": "npm run validate:scn && npm run validate:device && npm run index:visual && npm test",
+    "release": "aiot release",
+    "build": "aiot build && node tools/check-rpk.js",
+    "start": "aiot start"
+  },
+  "devDependencies": {
+    "aiot-toolkit": "2.0.5"
+  }
+}
