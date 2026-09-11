@@ -1,0 +1,20 @@
+{
+  "id": "小米手表S5",
+  "shape": "circle",
+  "physicalWidth": 480,
+  "physicalHeight": 480,
+  "designWidth": 240,
+  "designHeight": 240,
+  "characterCanvas": [
+    212,
+    520
+  ],
+  "background": [
+    480,
+    480
+  ],
+  "eventMax": [
+    480,
+    480
+  ]
+}

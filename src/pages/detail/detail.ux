@@ -1,0 +1,652 @@
+<template>
+  <div class="page">
+    <div class="page game-page" @click="handleGameClick" @longpress="enableUIHidden" if="{{!menu && recovery === 0 && !showChoice && !showEnd}}">
+      <scroll id="bg-horizontal-scroll" scroll-x="false" scroll-y="false" bounces="false" class="background-scroll" if="{{Img && backgroundMode === 'horizontal'}}" @touchstart="blockBackgroundTouch" @touchmove="blockBackgroundTouch" @touchend="blockBackgroundTouch">
+        <image class="background-horizontal" src="{{Img}}"></image>
+      </scroll>
+      <scroll id="bg-vertical-scroll" scroll-x="false" scroll-y="false" bounces="false" class="background-vertical-scroll" if="{{Img && backgroundMode === 'vertical'}}" @touchstart="blockBackgroundTouch" @touchmove="blockBackgroundTouch" @touchend="blockBackgroundTouch">
+        <div class="background-vertical-track"><image class="background-vertical" src="{{Img}}"></image></div>
+      </scroll>
+      <image id="bg-static" class="background" src="{{Img}}" if="{{Img && !backgroundMode && !isCg}}" @touchstart="blockBackgroundTouch" @touchmove="blockBackgroundTouch" @touchend="blockBackgroundTouch"></image>
+      <image class="cg-image" src="{{Img}}" if="{{Img && isCg}}" @swipe="blockSystemBack"></image>
+      <div class="person-slot person-single" if="{{stageSingleBody && !isFullScreenCg}}" @swipe="blockSystemBack"><image class="person-layer" src="{{stageSingleBody}}"></image><image class="person-layer" src="{{stageSingleFace}}" if="{{stageSingleFace}}"></image></div>
+      <div class="person-slot person-duo-left" if="{{stageDuoLeftBody && !isFullScreenCg}}" @swipe="blockSystemBack"><image class="person-layer" src="{{stageDuoLeftBody}}"></image><image class="person-layer" src="{{stageDuoLeftFace}}" if="{{stageDuoLeftFace}}"></image></div>
+      <div class="person-slot person-duo-right" if="{{stageDuoRightBody && !isFullScreenCg}}" @swipe="blockSystemBack"><image class="person-layer" src="{{stageDuoRightBody}}"></image><image class="person-layer" src="{{stageDuoRightFace}}" if="{{stageDuoRightFace}}"></image></div>
+      <div class="person-slot person-trio-left" if="{{stageTrioLeftBody && !isFullScreenCg}}" @swipe="blockSystemBack"><image class="person-layer" src="{{stageTrioLeftBody}}"></image><image class="person-layer" src="{{stageTrioLeftFace}}" if="{{stageTrioLeftFace}}"></image></div>
+      <div class="person-slot person-trio-center" if="{{stageTrioCenterBody && !isFullScreenCg}}" @swipe="blockSystemBack"><image class="person-layer" src="{{stageTrioCenterBody}}"></image><image class="person-layer" src="{{stageTrioCenterFace}}" if="{{stageTrioCenterFace}}"></image></div>
+      <div class="person-slot person-trio-right" if="{{stageTrioRightBody && !isFullScreenCg}}" @swipe="blockSystemBack"><image class="person-layer" src="{{stageTrioRightBody}}"></image><image class="person-layer" src="{{stageTrioRightFace}}" if="{{stageTrioRightFace}}"></image></div>
+      <image class="stage-overlay" src="{{stageOverlayImage}}" if="{{stageOverlayImage && !isFullScreenCg}}" @swipe="blockSystemBack"></image>
+      <div class="dialogue-panel" if="{{dialogueVisible && !isUIHidden}}" @swipe="blockSystemBack"></div>
+      <text class="character-name" if="{{dialogueVisible && !isUIHidden}}" @swipe="blockSystemBack">{{character}}</text>
+      <scroll scroll-y="true" bounces="true" class="scroll" id="scroll" if="{{dialogueVisible && !isUIHidden}}" @swipe="blockSystemBack">
+        <div class="dialogue-content">
+          <text class="dialogue-text dialogue-text-small" if="{{textSmall}}">{{showText}}</text>
+          <text class="dialogue-text dialogue-text-medium" if="{{textMedium}}">{{showText}}</text>
+          <text class="dialogue-text dialogue-text-large" if="{{textLarge}}">{{showText}}</text>
+        </div>
+      </scroll>
+    </div>
+
+    <div class="choice-page" if="{{showChoice}}" @swipe="blockSystemBack">
+      <scroll scroll-y="true" bounces="true" class="choice-list">
+        <div class="choice-grid">
+          <text class="choice" for="{{choices}}" @click="selectChoice($idx)">{{$item.text}}</text>
+        </div>
+      </scroll>
+      <div class="menu-trigger-hit" @click="openMenu"><div class="menu-trigger"><div class="menu-bar menu-bar-top"></div><div class="menu-bar menu-bar-middle"></div><div class="menu-bar menu-bar-bottom"></div></div></div>
+    </div>
+
+    <div class="menu-trigger-hit" if="{{!menu && recovery === 0 && !showEnd && !showChoice && !isUIHidden}}" @click="openMenu"><div class="menu-trigger"><div class="menu-bar menu-bar-top"></div><div class="menu-bar menu-bar-middle"></div><div class="menu-bar menu-bar-bottom"></div></div></div>
+
+    <div class="page menu-page" if="{{menu}}" @swipe="back">
+      <text class="menu-heading">阅读菜单</text>
+      <div class="menu-status">
+        <text class="chapter-label">{{chapterLabel}}</text>
+        <text class="scene-progress">{{sceneProgress}}</text>
+      </div>
+      <text class="menu-btn menu-primary" @click="openSavePage">保存进度</text>
+      <text class="menu-btn" @click="openLoadPage">读取存档</text>
+      <text class="menu-btn" @click="skipToOptions">跳过场景</text>
+      <text class="menu-btn" @click="skipChapter">跳过章节</text>
+      <text class="menu-btn" @click="toggleAutoPlay">{{autoPlayLabel}}</text>
+      <div class="menu-row">
+        <text class="menu-small-btn" @click="openSettingsPage">设置</text>
+        <text class="menu-small-btn" @click="back('e')">主页</text>
+      </div>
+      <text class="menu-close" @click="closeMenu">返回阅读</text>
+    </div>
+
+    <div class="page end-page" if="{{showEnd}}" @swipe="back">
+      <text class="end-title">达成结局</text>
+      <text class="end-text">{{END}}</text>
+      <text class="end-action" @click="back('e')">返回主页</text>
+    </div>
+  </div>
+</template>
+
+<script>
+import router from '@system.router'
+import storage from '@system.storage'
+import prompt from '@system.prompt'
+import file from '@system.file'
+import { SCN_TYPE, SETTINGS_KEY, STORY_DIR } from '../../common/reader-constants.js'
+import { resolveBackground, resolveEvent, resolveCharacterLayers, setResourceManifest } from '../../common/resource-resolver.js'
+import { runtimeData, loadRuntimeData } from '../../common/runtime-data.js'
+import { DEFAULT_READER_SETTINGS, normalizeReaderSettings, getAutoAdvanceDelay } from '../../common/reader-settings.js'
+import { toDisplayCharacterName } from '../../common/display-names.js'
+import engine from './scriptEngine.js'
+
+export default {
+  ...engine,
+  protected: { auto: '', load: '' },
+  private: {
+    scriptData: [], currentScnId: '001', currentLineIndex: 0, index: 0, currentCharIndex: 0,
+    Img: '', backgroundMode: '', isCg: false, isFullScreenCg: false, cgGroup: '', cgSrc: '', currentEvent: '',
+    showText: '', typingText: '', character: '', settings: DEFAULT_READER_SETTINGS, textSize: 22,
+    textSmall: true, textMedium: false, textLarge: false,
+    stageSingleBody: '', stageSingleFace: '', stageDuoLeftBody: '', stageDuoLeftFace: '', stageDuoRightBody: '', stageDuoRightFace: '', stageTrioLeftBody: '', stageTrioLeftFace: '', stageTrioCenterBody: '', stageTrioCenterFace: '', stageTrioRightBody: '', stageTrioRightFace: '', stageOverlayImage: '', sceneOverlayImage: '', centerOverlayImage: '', topRightOverlayImage: '',
+    currentBg: '', currentCharacters: null, currentSpeaker: '', fullText: '', autoPlay: false, autoPlayLabel: '自动播放：关', autoPlayTimer: 0,
+    choices: [], dialogueVisible: false, showChoice: false, showEnd: false,
+    chapter: 0, chapterLabel: '第1章', sceneProgress: '场景 1', menu: false, recovery: 0,
+    gameFlags: {}, currentChapterName: '', isUIHidden: false, suppressHiddenClick: false, canContinue: true,
+    recoveryData: [], missingVisuals: {}, END: '', loading: false, typingToken: 0, backgroundMotionToken: 0, cgToken: 0,
+    dialoguesSinceAutoSave: 0, autoSaveWriteWarned: false
+  },
+
+  onInit() {
+    this.loadSettings()
+    this.initializeGame()
+  },
+
+  initializeGame() {
+    const loadRequestedState = () => {
+      if (this.auto !== '1') return this.loadData()
+      storage.get({
+        key: 'autoSave',
+        success: (data) => {
+          try {
+            const saved = JSON.parse(data)
+            if (saved && saved.currentScnId) this.restoreData(saved)
+          } catch (error) {}
+          this.loadData()
+        },
+        fail: () => this.loadData()
+      })
+    }
+    loadRuntimeData((uri, options) => file.readText({ uri, ...options }), (error) => {
+      if (error) {
+        prompt.showToast({ message: '资源索引读取失败' })
+        return
+      }
+      setResourceManifest(runtimeData.resourceManifest)
+      storage.get({
+      key: 'recoveryData',
+      success: (data) => {
+        try {
+          const parsed = JSON.parse(data)
+          this.recoveryData = Array.isArray(parsed) ? parsed : []
+        } catch (error) { this.recoveryData = [] }
+        const rawLoad = this.load
+        if (rawLoad !== undefined && rawLoad !== null && rawLoad !== '') {
+          const slot = Number(rawLoad)
+          if (!Number.isInteger(slot) || slot < 0 || !this.recoveryData[slot]) {
+            prompt.showToast({ message: '存档不存在' })
+            return
+          }
+          this.restoreData(this.recoveryData[slot])
+          this.loadData()
+          return
+        }
+        loadRequestedState()
+      },
+      fail: () => loadRequestedState()
+      })
+    })
+  },
+
+  onShow() { this.loadSettings(); this.restartBackgroundMotion() },
+  onHide() { this.persistAutoSave(true); this.typingToken += 1; this.cgToken += 1; this.stopBackgroundMotion(); this.clearAutoPlayTimer() },
+  onDestroy() { this.persistAutoSave(true); this.typingToken += 1; this.cgToken += 1; this.stopBackgroundMotion(); this.clearAutoPlayTimer() },
+
+  loadSettings() {
+    storage.get({ key: SETTINGS_KEY, success: (data) => {
+      try {
+        const saved = JSON.parse(data)
+        this.settings = normalizeReaderSettings(saved)
+        this.autoPlay = Boolean(this.settings.autoPlay)
+        this.autoPlayLabel = this.autoPlay ? '自动播放：开' : '自动播放：关'
+        this.setTextSize(this.settings.textSize)
+      } catch (error) {}
+    }, fail: () => {} })
+  },
+
+  getPathById(id) {
+    return runtimeData.scenePathById[id]
+  },
+
+  loadData() {
+    this.loadScenario(this.currentScnId, this.currentLineIndex)
+  },
+
+  loadScenario(id, startIndex = 0) {
+    this.loading = true
+    this.stopBackgroundMotion()
+    this.clearAutoPlayTimer()
+    this.scriptData = []
+    this.currentCharacters = null
+    this.clearStageCharacters()
+    this.Img = ''
+    this.backgroundMode = ''
+    this.isCg = false
+    this.isFullScreenCg = false
+    this.stageOverlayImage = ''
+    const fileName = this.getPathById(id)
+    if (!fileName) { this.loading = false; return prompt.showToast({ message: '场景未找到' }) }
+    file.readText({
+      uri: `${STORY_DIR}/${fileName}`,
+      success: (data) => {
+        try {
+          this.scriptData = JSON.parse(data.text)
+          this.currentScnId = id
+          this.currentLineIndex = parseInt(startIndex, 10) || 0
+          this.loading = false
+          this.renderCurrentLine()
+        } catch (e) { this.loading = false; prompt.showToast({ message: '剧本解析失败' }) }
+      },
+      fail: () => { this.loading = false; prompt.showToast({ message: '剧本读取失败' }) }
+    })
+  },
+
+  // 渲染当前指令：应用背景/立绘/CG，并显示对白
+  renderCurrentLine() {
+    let guard = 0
+    while (this.scriptData && this.currentLineIndex < this.scriptData.length && guard < 64) {
+      const node = this.scriptData[this.currentLineIndex]
+      const type = node[0]
+      const content = node[1]
+      guard += 1
+      switch (type) {
+      case SCN_TYPE.BACKGROUND:
+        this.currentBg = content
+        this.currentEvent = ''
+        this.stageOverlayImage = ''
+        this.applyStage()
+        this.persistAutoSave(true)
+        this.currentLineIndex++
+        continue
+      case SCN_TYPE.DIALOGUE: {
+        this.currentSpeaker = content || ''
+        this.fullText = node[2] || ''
+        if (node.length > 3) this.currentCharacters = Array.isArray(node[3]) ? node[3] : []
+        this.applyStage()
+        this.character = toDisplayCharacterName(this.currentSpeaker)
+        this.dialoguesSinceAutoSave += 1
+        if (this.dialoguesSinceAutoSave >= 10) this.persistAutoSave(false)
+        this.showDialogue(this.fullText)
+        return
+      }
+      case SCN_TYPE.SELECT:
+        this.persistAutoSave(true)
+        this.showChoice = true
+        this.choices = content.map((item) => ({ text: item[0], targetLabel: item[1], exp: item[2] }))
+        this.dialogueVisible = true
+        return
+      case SCN_TYPE.CHAPTER_TITLE:
+        this.currentChapterName = content
+        this.chapterLabel = content
+        this.currentLineIndex++
+        continue
+      case SCN_TYPE.LABEL:
+        this.currentLineIndex++
+        continue
+      case SCN_TYPE.NEXT:
+        this.jumpToLabel(content)
+        return
+      case SCN_TYPE.EV:
+        if (!content) {
+          this.currentEvent = ''
+          this.stageOverlayImage = ''
+          this.applyStage()
+        } else if (String(content).startsWith('ch_')) {
+          this.stageOverlayImage = this.resolveVisual('overlay', content)
+        } else {
+          this.currentEvent = content
+          this.applyStage()
+        }
+        this.currentLineIndex++
+        continue
+      default:
+        this.currentLineIndex++
+        continue
+      }
+    }
+    if (!this.scriptData || this.currentLineIndex >= this.scriptData.length) this.goToNextScenario()
+    else if (guard >= 64) setTimeout(() => this.renderCurrentLine(), 0)
+  },
+
+  jumpToLabel(targetLabel) {
+    const jumpIndex = this.scriptData.findIndex((item) => item[0] === SCN_TYPE.LABEL && item[1] === targetLabel)
+    if (jumpIndex !== -1) {
+      this.currentLineIndex = jumpIndex
+      this.renderCurrentLine()
+    } else {
+      this.currentLineIndex++
+      this.renderCurrentLine()
+    }
+  },
+
+  // 应用背景/立绘/CG 到母本 UI 图层
+  applyStage() {
+    const rawBackground = this.currentEvent || this.currentBg
+    const isCg = rawBackground && (String(rawBackground).startsWith('ev') || String(rawBackground).startsWith('sd'))
+    const isFull = isCg && String(rawBackground).startsWith('ev')
+    const background = isCg ? this.resolveVisual('event', rawBackground) : this.resolveVisual('background', rawBackground)
+    this.showBackground(background, isCg ? '' : 'horizontal', isCg ? background : null, isFull)
+    if (Array.isArray(this.currentCharacters) && this.currentCharacters.length) {
+      const imgs = this.currentCharacters.map((item) => {
+        if (!Array.isArray(item)) return ''
+        return resolveCharacterLayers(item[0], item[2], item[3], runtimeData.characterMap, runtimeData.characterFaceMap) || this.missingVisual('character', `${item[0]}|${item[2] || ''}|${item[3] || ''}`)
+      }).filter(Boolean)
+      const layout = this.stageLayout(imgs)
+      this.stageSingleBody = layout.stageSingleBody
+      this.stageSingleFace = layout.stageSingleFace
+      this.stageDuoLeftBody = layout.stageDuoLeftBody
+      this.stageDuoLeftFace = layout.stageDuoLeftFace
+      this.stageDuoRightBody = layout.stageDuoRightBody
+      this.stageDuoRightFace = layout.stageDuoRightFace
+      this.stageTrioLeftBody = layout.stageTrioLeftBody
+      this.stageTrioLeftFace = layout.stageTrioLeftFace
+      this.stageTrioCenterBody = layout.stageTrioCenterBody
+      this.stageTrioCenterFace = layout.stageTrioCenterFace
+      this.stageTrioRightBody = layout.stageTrioRightBody
+      this.stageTrioRightFace = layout.stageTrioRightFace
+    } else this.clearStageCharacters()
+  },
+
+  clearStageCharacters() {
+    this.stageSingleBody = ''; this.stageSingleFace = ''
+    this.stageDuoLeftBody = ''; this.stageDuoLeftFace = ''
+    this.stageDuoRightBody = ''; this.stageDuoRightFace = ''
+    this.stageTrioLeftBody = ''; this.stageTrioLeftFace = ''
+    this.stageTrioCenterBody = ''; this.stageTrioCenterFace = ''
+    this.stageTrioRightBody = ''; this.stageTrioRightFace = ''
+  },
+
+  resolveVisual(type, value) {
+    const resolved = type === 'background' ? resolveBackground(value) : type === 'overlay' ? resolveEvent(value) : resolveEvent(value)
+    if (value && !resolved) return this.missingVisual(type, value)
+    return resolved
+  },
+
+  missingVisual(type, value) {
+    const key = `${type}:${value}`
+    if (!this.missingVisuals[key]) {
+      this.missingVisuals[key] = true
+      prompt.showToast({ message: `缺少资源：${value}` })
+    }
+    return ''
+  },
+
+  showBackground(image, motion, cgImage, isFullScreenCg) {
+    const isCg = Boolean(cgImage)
+    const cgGroup = isCg ? String(cgImage).split('_')[0] : ''
+    if (this.Img === image && this.backgroundMode === motion && this.isCg === isCg && this.isFullScreenCg === isFullScreenCg) return
+    this.Img = image || ''
+    this.backgroundMode = motion || ''
+    this.isCg = isCg
+    this.isFullScreenCg = Boolean(isFullScreenCg)
+    this.cgGroup = cgGroup
+    this.cgToken += 1
+    this.stopBackgroundMotion()
+    if (!isCg && motion === 'horizontal') this.startBackgroundMotion(motion)
+  },
+
+  stopBackgroundMotion() { this.backgroundMotionToken += 1 },
+  restartBackgroundMotion() {
+    if (this.isCg || !this.Img || !this.backgroundMode) return
+    this.stopBackgroundMotion()
+    this.startBackgroundMotion(this.backgroundMode)
+  },
+  startBackgroundMotion(motion) {
+    const token = this.backgroundMotionToken
+    if (motion === 'horizontal') return this.startHorizontalBackgroundMotion(token)
+    return this.startVerticalBackgroundMotion(token)
+  },
+  scrollBackground(id, left, top) {
+    try {
+      const element = this.$element(id)
+      if (!element || typeof element.scrollTo !== 'function') return false
+      element.scrollTo({ left, top, behavior: 'instant' })
+      return true
+    } catch (error) { return false }
+  },
+  startHorizontalBackgroundMotion(token) {
+    const travel = 212
+    const duration = 5000
+    const move = (from, to) => {
+      const startedAt = Date.now()
+      const tick = () => {
+        if (token !== this.backgroundMotionToken) return
+        const progress = Math.min(1, (Date.now() - startedAt) / duration)
+        const left = Math.round(from + (to - from) * progress)
+        this.scrollBackground('bg-horizontal-scroll', left, 0)
+        if (progress < 1) return setTimeout(tick, 50)
+        move(to, from)
+      }
+      tick()
+    }
+    setTimeout(() => move(0, travel), 0)
+  },
+  startVerticalBackgroundMotion(token) {
+    const travel = 8
+    const duration = 5000
+    const move = (from, to) => {
+      const startedAt = Date.now()
+      const tick = () => {
+        if (token !== this.backgroundMotionToken) return
+        const progress = Math.min(1, (Date.now() - startedAt) / duration)
+        const top = Math.round(from + (to - from) * progress)
+        this.scrollBackground('bg-vertical-scroll', 0, top)
+        if (progress < 1) return setTimeout(tick, 50)
+        move(to, from)
+      }
+      tick()
+    }
+    setTimeout(() => move(0, travel), 0)
+  },
+
+  showDialogue(text) {
+    this.clearAutoPlayTimer()
+    this.typingToken += 1
+    this.typingText = text || ''
+    this.showText = ''
+    this.dialogueVisible = true
+    this.canContinue = false
+    this.index = 0
+    if (this.settings.textSpeed === 0) { this.finishTyping(); return }
+    this.zhuzi(this.typingToken)
+  },
+  zhuzi(token) {
+    if (token !== this.typingToken) return
+    const speed = Number(this.settings.textSpeed) || 0
+    if (speed <= 0) return this.finishTyping(token)
+    const elapsed = Math.max(0, Date.now() - (this.typingStartedAt || Date.now()))
+    if (!this.typingStartedAt) this.typingStartedAt = Date.now() - (this.index || 0) * speed
+    this.index = Math.min(this.typingText.length, Math.max(this.index + 1, Math.floor(elapsed / speed) + 1))
+    this.showText = this.typingText.slice(0, this.index)
+    if (this.index >= this.typingText.length) return this.finishTyping(token)
+    setTimeout(() => this.zhuzi(token), 50)
+  },
+  finishTyping(token) {
+    if (token !== undefined && token !== this.typingToken) return
+    this.typingToken += 1
+    this.typingStartedAt = 0
+    this.showText = this.typingText
+    this.index = this.typingText.length
+    this.canContinue = true
+    this.scheduleAutoPlay()
+  },
+  clearAutoPlayTimer() {
+    if (this.autoPlayTimer) {
+      clearTimeout(this.autoPlayTimer)
+      this.autoPlayTimer = 0
+    }
+  },
+  scheduleAutoPlay() {
+    this.clearAutoPlayTimer()
+    if (!this.autoPlay || !this.canContinue || this.showChoice || this.showEnd || this.menu) return
+    const delay = getAutoAdvanceDelay(this.typingText, this.settings.autoPlaySpeed)
+    this.autoPlayTimer = setTimeout(() => {
+      this.autoPlayTimer = 0
+      if (this.autoPlay && this.canContinue && !this.menu && !this.showChoice && !this.showEnd) this.nextLine()
+    }, delay)
+  },
+  toggleAutoPlay() {
+    this.autoPlay = !this.autoPlay
+    this.settings = Object.assign({}, this.settings, { autoPlay: this.autoPlay })
+    storage.set({ key: SETTINGS_KEY, value: JSON.stringify(this.settings) })
+    this.autoPlayLabel = this.autoPlay ? '自动播放：开' : '自动播放：关'
+    if (this.autoPlay) {
+      this.menu = false
+      if (this.canContinue) this.scheduleAutoPlay()
+    } else this.clearAutoPlayTimer()
+  },
+  setTextSize(size) {
+    this.textSize = Number(size) || 22
+    this.textSmall = this.textSize <= 22
+    this.textMedium = this.textSize > 22 && this.textSize <= 30
+    this.textLarge = this.textSize > 30
+  },
+  stageLayout(imgs) {
+    const layout = { stageSingleBody: '', stageSingleFace: '', stageDuoLeftBody: '', stageDuoLeftFace: '', stageDuoRightBody: '', stageDuoRightFace: '', stageTrioLeftBody: '', stageTrioLeftFace: '', stageTrioCenterBody: '', stageTrioCenterFace: '', stageTrioRightBody: '', stageTrioRightFace: '' }
+    const count = imgs.length
+    const assign = (prefix, image) => { layout[`${prefix}Body`] = image && image.body || ''; layout[`${prefix}Face`] = image && image.face || '' }
+    if (count === 1) assign('stageSingle', imgs[0])
+    else if (count === 2) { assign('stageDuoLeft', imgs[0]); assign('stageDuoRight', imgs[1]) }
+    else if (count === 3) { assign('stageTrioLeft', imgs[0]); assign('stageTrioCenter', imgs[1]); assign('stageTrioRight', imgs[2]) }
+    return layout
+  },
+
+  nextLine() {
+    if (this.loading || this.showChoice || this.END) return
+    this.clearAutoPlayTimer()
+    if (!this.canContinue) return this.finishTyping()
+    this.scrollToTop()
+    this.currentLineIndex++
+    this.renderCurrentLine()
+  },
+
+  goToNextScenario() {
+    const next = this.getNextScn(this.currentScnId)
+    if (next) { this.currentScnId = next.id; this.loadScenario(next.id) }
+    else { this.persistAutoSave(true); this.END = '游戏结束'; this.showEnd = true; this.dialogueVisible = false }
+  },
+
+  selectChoice(index) {
+    const choice = this.choices[index]
+    if (!choice) return
+    this.persistAutoSave(true)
+    if (choice.exp) this.runExp(choice.exp)
+    this.showChoice = false
+    this.jumpToLabel(choice.targetLabel)
+  },
+
+  blockSystemBack() {},
+  blockBackgroundTouch() {},
+  openMenu() { if (!this.showEnd && this.recovery === 0) { this.menu = true; this.clearAutoPlayTimer() } },
+  closeMenu() { this.menu = false; if (this.canContinue) this.scheduleAutoPlay() },
+  back(action) {
+    if ((action && (action.direction === 'left' || action.direction === 'right')) || action === 'c') {
+      if (this.recovery !== 0) this.recovery = 0
+      else if (this.menu) { this.menu = false; if (this.canContinue) this.scheduleAutoPlay() }
+    }
+    else if (action === 'e') { this.persistAutoSave(true); router.replace({ uri: 'pages/index' }) }
+  },
+  scrollToTop() { this.$element('scroll').scrollTo({ top: 0, left: 0, behavior: 'instant' }) },
+
+  openSavePage() {
+    this.persistAutoSave(true)
+    const pendingSave = this.buildSaveData()
+    this.menu = false
+    storage.set({ key: 'pendingSave', value: JSON.stringify(pendingSave), success: () => router.push({ uri: 'pages/saves', params: { mode: 'save' } }), fail: () => prompt.showToast({ message: '无法准备存档' }) })
+  },
+  openLoadPage() { this.persistAutoSave(true); this.menu = false; router.push({ uri: 'pages/saves', params: { mode: 'load' } }) },
+  openSettingsPage() { this.persistAutoSave(true); this.menu = false; router.push({ uri: 'pages/settings' }) },
+  persistAutoSave(force) {
+    if (!this.currentScnId || this.loading || (!force && this.dialoguesSinceAutoSave < 10)) return
+    const data = this.buildSaveData()
+    this.dialoguesSinceAutoSave = 0
+    storage.set({ key: 'autoSave', value: JSON.stringify(data), fail: () => {
+      if (!this.autoSaveWriteWarned) { this.autoSaveWriteWarned = true; prompt.showToast({ message: '自动存档失败' }) }
+    } })
+  },
+  buildSaveData() {
+    return { storyId: 'sanoba-witch', currentScnId: this.currentScnId, currentLineIndex: this.currentLineIndex, currentBg: this.currentBg, currentEvent: this.currentEvent, currentChapterName: this.currentChapterName, gameFlags: Object.assign({}, this.gameFlags), savedAt: Date.now(), settings: Object.assign({}, this.settings, { autoPlay: this.autoPlay }) }
+  },
+  restoreData(data) {
+    this.currentScnId = (data && data.currentScnId) || '001'
+    this.currentLineIndex = parseInt(data && data.currentLineIndex, 10) || 0
+    this.currentBg = (data && data.currentBg) || ''
+    this.currentEvent = (data && data.currentEvent) || ''
+    this.currentChapterName = (data && data.currentChapterName) || ''
+    this.gameFlags = (data && data.gameFlags) || {}
+    const saved = data && data.settings ? data.settings : {}
+    this.settings = normalizeReaderSettings(Object.assign({}, this.settings, saved))
+    this.autoPlay = Boolean(this.settings.autoPlay)
+    this.autoPlayLabel = this.autoPlay ? '自动播放：开' : '自动播放：关'
+    this.setTextSize(this.settings.textSize)
+  },
+
+  handleGameClick() {
+    if (this.suppressHiddenClick) { this.suppressHiddenClick = false; return }
+    if (this.isUIHidden) { this.isUIHidden = false; return }
+    this.nextLine()
+  },
+  enableUIHidden() { this.isUIHidden = true; this.suppressHiddenClick = true },
+
+  skipToOptions() {
+    this.menu = false
+    this.skipUntilBackground()
+  },
+
+  skipChapter() {
+    this.persistAutoSave(true)
+    this.menu = false
+    const next = this.getNextScn(this.currentScnId)
+    if (!next) return prompt.showToast({ message: '没有可跳过的章节' })
+    this.currentScnId = next.id
+    this.loadScenario(next.id)
+  },
+
+  // 借用 engine 的快进/规则方法
+  skipUntilBackground() {
+    if (!this.scriptData || this.scriptData.length === 0) return
+    let guard = 0
+    let found = -1
+    for (let i = this.currentLineIndex + 1; i < this.scriptData.length && guard < 10000; i += 1, guard += 1) {
+      if (this.scriptData[i][0] === SCN_TYPE.BACKGROUND) { found = i; break }
+    }
+    if (found >= 0) {
+      this.persistAutoSave(true)
+      this.currentLineIndex = found
+      this.renderCurrentLine()
+      return
+    }
+    if (this.currentLineIndex >= this.scriptData.length || guard >= 10000) {
+      this.persistAutoSave(true)
+      this.goToNextScenario()
+      return
+    }
+    while (this.currentLineIndex < this.scriptData.length && guard < 10000) {
+      const node = this.scriptData[this.currentLineIndex]
+      const type = node[0]
+      const content = node[1]
+      if (type === SCN_TYPE.SELECT) { this.renderCurrentLine(); return }
+      if (type === SCN_TYPE.DIALOGUE) { this.currentSpeaker = content || ''; this.fullText = node[2] || '' }
+      if (type === SCN_TYPE.BACKGROUND) { this.currentBg = content; this.currentEvent = ''; this.renderCurrentLine(); return }
+      if (type === SCN_TYPE.CHAPTER_TITLE) this.currentChapterName = content
+      this.currentLineIndex++
+      guard++
+    }
+    if (this.currentLineIndex >= this.scriptData.length) this.goToNextScenario()
+  }
+}
+</script>
+
+<style>
+
+.page { width: 240px; height: 240px; overflow: hidden; }
+.game-page { background-color: #000000; }
+.background { position: absolute; top: 0px; left: 0px; width: 240px; height: 240px; object-fit: cover; }
+.background-scroll { position: absolute; top: 0px; left: 0px; width: 240px; height: 240px; overflow: hidden; flex-wrap: nowrap; flex-direction: row; }
+.background-horizontal { width: 480px; height: 240px; object-fit: cover; }
+.background-vertical-scroll { position: absolute; top: 0px; left: 0px; width: 240px; height: 240px; overflow: hidden; flex-wrap: nowrap; flex-direction: column; }
+.background-vertical-track { width: 480px; height: 243.69px; flex-direction: column; }
+.background-vertical { width: 480px; height: 240px; object-fit: cover; }
+.cg-image { position: absolute; top: 0px; left: 0px; width: 240px; height: 240px; object-fit: contain; }
+.person-slot { position: absolute; }
+.person-layer { position: absolute; top: 0px; left: 0px; width: 100%; height: 100%; object-fit: fill; }
+.person-single { top: 2.77px; left: -20.38px; width: 280.75px; height: 237.23px; }
+.person-duo-left { bottom: -3.69px; left: -65.66px; width: 260.38px; height: 226.15px; }
+.person-duo-right { bottom: -3.69px; left: 65.66px; width: 260.38px; height: 226.15px; }
+.person-trio-left { bottom: -3.69px; left: -76.98px; width: 249.06px; height: 214.62px; }
+.person-trio-center { bottom: -3.69px; left: -4.53px; width: 249.06px; height: 214.62px; }
+.person-trio-right { bottom: -3.69px; left: 67.92px; width: 249.06px; height: 214.62px; }
+.stage-overlay { position: absolute; top: 0px; left: 0px; width: 240px; height: 240px; object-fit: contain; }
+.menu-trigger-hit { position: absolute; top: 1.85px; left: 79.25px; width: 81.51px; height: 17.54px; z-index: 20; }
+.menu-trigger { position: absolute; top: 0px; left: 0px; width: 81.51px; height: 15.69px; background-color: rgba(18,13,18,0.30); border-radius: 4.62px; flex-direction: column; align-items: center; justify-content: center; }
+.menu-bar { width: 31.7px; height: 1.38px; background-color: #ffdbe7; border-radius: 0.92px; }
+.menu-bar-middle, .menu-bar-bottom { margin-top: 1.85px; }
+.dialogue-panel { position: absolute; top: 150.46px; left: 0px; width: 240px; height: 89.54px; background-color: #120d13; opacity: 0.30; border-radius: 8.31px 8.31px 0px 0px; }
+.character-name { position: absolute; top: 152.31px; left: 11.32px; width: 217.36px; font-size: 10.15px; color: #ffd8e6; font-weight: bold; }
+.scroll { position: absolute; top: 166.15px; left: 5.66px; width: 228.68px; height: 70.15px; overflow: hidden; flex-wrap: wrap; }
+.dialogue-content { width: 100%; min-height: 80.31px; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
+.dialogue-text { color: #ffffff; font-weight: bold; width: 100%; text-align: left; line-height: 13.85px; }
+.dialogue-text-small { font-size: 9.23px; }
+.dialogue-text-medium { font-size: 11.08px; line-height: 15.69px; }
+.dialogue-text-large { font-size: 12.92px; line-height: 17.54px; }
+.choice-page { position: absolute; top: 0px; left: 0px; width: 100%; height: 100%; z-index: 20; background-color: #130d15; flex-direction: column; align-items: center; }
+.choice-list { position: absolute; top: 33.23px; left: 15.85px; width: 208.3px; height: 173.54px; overflow: hidden; }
+.choice-grid { width: 208.3px; min-height: 173.54px; flex-direction: column; flex-wrap: nowrap; justify-content: center; align-items: center; }
+.choice { width: 99.62px; height: 29.54px; margin: 0px 2.26px 3.69px; padding: 3.69px 6.79px; background-color: #34202d; color: #ffffff; font-size: 8.31px; font-weight: bold; line-height: 10.62px; text-align: center; border-radius: 4.62px; }
+.menu-page { position: absolute; top: 0px; left: 0px; background-color: #171119; flex-direction: column; align-items: center; justify-content: center; }
+.menu-heading { width: 212.83px; height: 25.85px; line-height: 25.85px; color: #ffd8e6; font-size: 11.08px; font-weight: bold; text-align: center; }
+.menu-status { width: 185.66px; height: 10.15px; margin-bottom: 4.62px; flex-direction: row; justify-content: space-between; align-items: center; }
+.chapter-label { color: #e4bdcb; font-size: 6.46px; font-weight: bold; }
+.scene-progress { color: #cbaeb9; font-size: 6px; font-weight: bold; }
+.menu-btn { width: 185.66px; height: 20.31px; margin-top: 3.69px; background-color: rgba(65,37,54,0.70); color: #ffffff; font-size: 8.77px; font-weight: bold; text-align: center; border-radius: 4.62px; }
+.menu-primary { background-color: rgba(185,80,121,0.78); }
+.menu-row { width: 185.66px; height: 17.54px; margin-top: 3.69px; flex-direction: row; justify-content: space-between; }
+.menu-small-btn { width: 88.3px; height: 17.54px; background-color: rgba(65,37,54,0.70); color: #ffd8e6; font-size: 8.31px; font-weight: bold; text-align: center; border-radius: 4.62px; }
+.menu-close { width: 153.96px; height: 23.08px; line-height: 23.08px; margin-top: 5.54px; background-color: rgba(48,43,51,0.70); color: #ffffff; font-size: 9.23px; font-weight: bold; text-align: center; border-radius: 4.62px; }
+.end-page { position: absolute; background-color: #130d15; flex-direction: column; align-items: center; justify-content: center; }
+.end-title { width: 203.77px; color: #ffd8e6; font-size: 12px; font-weight: bold; text-align: center; }
+.end-text { width: 203.77px; margin-top: 7.38px; color: #ffffff; font-size: 10.15px; font-weight: bold; text-align: center; }
+.end-action { width: 163.02px; height: 20.31px; margin-top: 12.92px; background-color: #b95079; color: #ffffff; font-size: 9.23px; font-weight: bold; text-align: center; border-radius: 5.54px; }
+.person-single { top: 2px; bottom: auto; left: -20.4px; width: 280.8px; height: 360px; }
+.person-duo-left { top: 0px; bottom: auto; left: -64.8px; width: 259.2px; height: 360px; }
+.person-duo-right { top: 0px; bottom: auto; left: 64.8px; width: 259.2px; height: 360px; }
+.person-trio-left { top: 0px; bottom: auto; left: -69.6px; width: 240.0px; height: 342px; }
+.person-trio-center { top: 0px; bottom: auto; left: -4.8px; width: 240.0px; height: 342px; }
+.person-trio-right { top: 0px; bottom: auto; left: 64.8px; width: 240.0px; height: 342px; }
+</style>

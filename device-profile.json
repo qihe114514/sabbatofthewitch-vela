@@ -1,0 +1,14 @@
+{
+  "name": "小米手表S5",
+  "base": "环10",
+  "shape": "circle",
+  "physical": [
+    480,
+    480
+  ],
+  "css": [
+    240,
+    240
+  ],
+  "version": 17
+}

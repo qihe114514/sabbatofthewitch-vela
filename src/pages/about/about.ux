@@ -1,0 +1,67 @@
+<template>
+  <div class="page" @swipe="blockSystemBack">
+    <text class="page-title">关于</text>
+    <scroll class="content" scroll-y="true" bounces="true">
+      <text class="game-title">{{title}}</text>
+      <text class="game-subtitle">{{subtitle}}</text>
+
+      <div class="info-row" for="{{infoRows}}">
+        <text class="info-label">{{$item.label}}</text>
+        <text class="info-value">{{$item.value}}</text>
+      </div>
+
+      <text class="section-title">故事介绍</text>
+      <text class="intro-copy">{{intro}}</text>
+      <text class="section-title">免责声明</text>
+      <text class="intro-copy">{{disclaimer}}</text>
+      <text class="section-title warning-title">R18警告</text>
+      <text class="intro-copy warning-copy">{{r18Warning}}</text>
+    </scroll>
+    <text class="back-btn" @click="back">返回</text>
+  </div>
+</template>
+
+<script>
+import router from '@system.router'
+
+export default {
+  private: {
+    title: '魔女的夜宴',
+    subtitle: 'サノバウィッチ',
+    infoRows: [
+      { label: '原作开发', value: 'Yuzusoft（柚子社）' },
+      { label: '移植作者', value: '@其核' },
+      { label: '官方Q群', value: '1105166284' }
+    ],
+    intro: '保科咚史拥有一种不可思议的能力—\n他可以感知别人的心情。\n这件事一直以来都是他的秘密。\n而他的同班同学——绫地宁宁，\n也同样有着一个不可告人的秘密。\n他们俩本来只是普通同学。\n然而某一天，阴差阳错之下\n咚史撞见了令他难以置信的一幕。\n令人震惊的事件迅速拉近了两个人的距离，\n也让他们相互坦白了各自的秘密。\n这时咚史才终于知道，\n“魔女”究竟是怎样的存在..\n宁宁总是会突然“发作”，不分时间和地点。\n“魔女”必须掩人耳目，只能在秘密之中展开行动。\n随着两人关系的发展，\n学妹、学姐、转校生也接连不断地来到他们身边。\n原本风平浪静的校园生活突然变得忙碌起来\n这让咚史开始有了一丝期待。\n“改变自己的机会，也许就在眼前”',
+    disclaimer: '本程序为个人非官方移植，仅供技术学习与交流使用。游戏内容、剧本与美术版权归原权利人所有，请支持正版，不得用于商业用途。',
+    r18Warning: '本作含成人向、性暗示及不适合未成年人的内容。仅限18岁以上成年人使用，请遵守当地法律法规。'
+  },
+  back() { router.back() },
+  blockSystemBack() {}
+}
+</script>
+
+<style>
+
+.page { position: relative; width: 240px; height: 240px; overflow: hidden; background-color: #1a1016; flex-direction: column; align-items: center; }
+.page-title { position: absolute; top: 0px; left: 0px; width: 240px; height: 24px; line-height: 24px; color: #ffffff; font-size: 12px; font-weight: bold; text-align: center; }
+.content { position: absolute; top: 26.77px; left: 9.06px; width: 221.89px; height: 182.77px; overflow: hidden; flex-direction: column; flex-wrap: nowrap; }
+.game-title { width: 221.89px; color: #ffffff; font-size: 12.46px; font-weight: bold; text-align: center; }
+.game-subtitle { width: 221.89px; margin-top: 2.77px; color: #e08db1; font-size: 6.92px; font-weight: bold; text-align: center; }
+.info-row { width: 221.89px; margin-top: 6.46px; flex-direction: row; align-items: flex-start; }
+.info-label { width: 99.62px; color: #b95079; font-size: 6.92px; font-weight: bold; }
+.info-value { flex: 1; color: #f5e1e8; font-size: 6.92px; font-weight: bold; line-height: 9.23px; }
+.section-title { width: 221.89px; margin-top: 9.23px; padding-bottom: 1.85px; color: #ffffff; font-size: 8.31px; font-weight: bold; border-bottom: 1px solid #b95079; }
+.intro-copy { width: 221.89px; margin-top: 4.62px; color: #e4c2cf; font-size: 7.85px; line-height: 11.54px; text-align: left; }
+.warning-title { color: #ff9abf; }
+.warning-copy { color: #ffb0c9; }
+.back-btn { position: absolute; bottom: 3.69px; left: 43.02px; width: 153.96px; height: 17.54px; line-height: 17.54px; color: #ffffff; font-size: 8.31px; font-weight: bold; text-align: center; background-color: #302b33; border-radius: 4.62px; z-index: 8; }
+.back-btn { bottom: 3.09px; left: 29.87px; width: 180.26px; height: 25.75px; line-height: 25.75px; font-size: 11.33px; border-radius: 8.24px; }
+.person-single { top: 2px; bottom: auto; left: -20.4px; width: 280.8px; height: 360px; }
+.person-duo-left { top: 0px; bottom: auto; left: -64.8px; width: 259.2px; height: 360px; }
+.person-duo-right { top: 0px; bottom: auto; left: 64.8px; width: 259.2px; height: 360px; }
+.person-trio-left { top: 0px; bottom: auto; left: -69.6px; width: 240.0px; height: 342px; }
+.person-trio-center { top: 0px; bottom: auto; left: -4.8px; width: 240.0px; height: 342px; }
+.person-trio-right { top: 0px; bottom: auto; left: 64.8px; width: 240.0px; height: 342px; }
+</style>

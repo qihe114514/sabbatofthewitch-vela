@@ -1,0 +1,121 @@
+<template>
+  <div class="page">
+    <text class="page-title">设置</text>
+    <scroll class="content" scroll-y="true" bounces="true">
+      <text class="label">显示速度 {{settings.textSpeed}}</text>
+      <slider class="slider" min="0" max="50" step="5" value="{{settings.textSpeed}}" onchange="changeTextSpeed"></slider>
+      <text class="hint">0 为立即显示</text>
+
+      <text class="label size-label">文字大小 {{settings.textSize}}</text>
+      <slider class="slider" min="20" max="36" step="2" value="{{settings.textSize}}" onchange="changeTextSize"></slider>
+
+      <div class="preview-screen">
+        <div class="preview-panel"></div>
+        <text class="preview-name">其核</text>
+        <scroll class="preview-scroll" scroll-y="true" bounces="false">
+          <text class="preview-dialogue preview-dialogue-small" if="{{textSmall}}">这是一段较长的对白预览。文字大小会直接影响这里的显示效果，让你在进入故事前确认阅读时是否舒适。即使对白持续延伸，也可以在这个小窗口里查看行距和整体层次。</text>
+          <text class="preview-dialogue preview-dialogue-medium" if="{{textMedium}}">这是一段较长的对白预览。文字大小会直接影响这里的显示效果，让你在进入故事前确认阅读时是否舒适。即使对白持续延伸，也可以在这个小窗口里查看行距和整体层次。</text>
+          <text class="preview-dialogue preview-dialogue-large" if="{{textLarge}}">这是一段较长的对白预览。文字大小会直接影响这里的显示效果，让你在进入故事前确认阅读时是否舒适。即使对白持续延伸，也可以在这个小窗口里查看行距和整体层次。</text>
+        </scroll>
+      </div>
+      <text class="label auto-label">自动阅读速度</text>
+      <div class="speed-row">
+        <text class="speed-option speed-selected" if="{{settings.autoPlaySpeed === 'slow'}}" @click="setAutoPlaySpeed('slow')">慢</text>
+        <text class="speed-option" if="{{settings.autoPlaySpeed !== 'slow'}}" @click="setAutoPlaySpeed('slow')">慢</text>
+        <text class="speed-option speed-selected" if="{{settings.autoPlaySpeed === 'medium'}}" @click="setAutoPlaySpeed('medium')">中</text>
+        <text class="speed-option" if="{{settings.autoPlaySpeed !== 'medium'}}" @click="setAutoPlaySpeed('medium')">中</text>
+        <text class="speed-option speed-selected" if="{{settings.autoPlaySpeed === 'fast'}}" @click="setAutoPlaySpeed('fast')">快</text>
+        <text class="speed-option" if="{{settings.autoPlaySpeed !== 'fast'}}" @click="setAutoPlaySpeed('fast')">快</text>
+      </div>
+      <div class="actions">
+        <text class="primary-btn" @click="saveSettings">保存</text>
+        <text class="secondary-btn" @click="resetSettings">重置</text>
+        <text class="about-btn" @click="openAbout">关于</text>
+      </div>
+    </scroll>
+    <div class="footer-scrim"></div>
+    <text class="back-btn" @click="back">返回</text>
+  </div>
+</template>
+
+<script>
+import router from '@system.router'
+import storage from '@system.storage'
+import prompt from '@system.prompt'
+import { DEFAULT_READER_SETTINGS, normalizeReaderSettings } from '../../common/reader-settings.js'
+
+export default {
+  private: { settings: DEFAULT_READER_SETTINGS, textSmall: true, textMedium: false, textLarge: false },
+  onInit() {
+    storage.get({
+      key: 'settings',
+      success: (data) => {
+        try {
+          const saved = JSON.parse(data)
+          this.settings = normalizeReaderSettings(saved)
+          this.setPreviewTextSize(this.settings.textSize)
+        } catch (error) {}
+      },
+      fail: () => {}
+    })
+  },
+  changeTextSpeed(event) { this.settings = Object.assign({}, this.settings, { textSpeed: event.progress }) },
+  changeTextSize(event) { this.settings = Object.assign({}, this.settings, { textSize: event.progress }); this.setPreviewTextSize(event.progress) },
+  setAutoPlaySpeed(speed) { this.settings = Object.assign({}, this.settings, { autoPlaySpeed: speed }) },
+  resetSettings() { this.settings = Object.assign({}, DEFAULT_READER_SETTINGS); this.setPreviewTextSize(this.settings.textSize) },
+  setPreviewTextSize(size) {
+    const textSize = Number(size) || DEFAULT_READER_SETTINGS.textSize
+    this.textSmall = textSize <= 22
+    this.textMedium = textSize > 22 && textSize <= 30
+    this.textLarge = textSize > 30
+  },
+  saveSettings() {
+    this.settings = normalizeReaderSettings(this.settings)
+    storage.set({
+      key: 'settings',
+      value: JSON.stringify(this.settings),
+      success: () => prompt.showToast({ message: '设置已保存' }),
+      fail: () => prompt.showToast({ message: '保存失败' })
+    })
+  },
+  openAbout() { router.push({ uri: 'pages/about' }) },
+  back() { router.back() }
+}
+</script>
+
+<style>
+
+.page { position: relative; width: 240px; height: 240px; overflow: hidden; background-color: #17151a; flex-direction: column; align-items: center; }
+.page-title { position: absolute; top: 0px; left: 0px; width: 100%; height: 24px; line-height: 24px; color: #ffffff; font-size: 12px; font-weight: bold; text-align: center; }
+.content { position: absolute; top: 25.85px; left: 0px; width: 240px; height: 188.31px; flex-direction: column; overflow: hidden; }
+.label { width: 203.77px; height: 11.08px; line-height: 11.08px; margin-left: 18.11px; color: #ffffff; font-size: 9.23px; font-weight: bold; }
+.slider { width: 203.77px; height: 13.85px; margin-left: 18.11px; color: #c75a84; }
+.hint { width: 203.77px; height: 8.31px; line-height: 8.31px; margin-left: 18.11px; color: #bdb8bf; font-size: 6.46px; }
+.size-label { margin-top: 3.69px; }
+.auto-label { margin-top: 3.69px; }
+.speed-row { width: 203.77px; height: 15.69px; margin-left: 18.11px; flex-direction: row; justify-content: space-between; }
+.speed-option { width: 63.4px; height: 15.69px; line-height: 15.69px; background-color: #4a414b; color: #ffffff; font-size: 8.31px; font-weight: bold; text-align: center; border-radius: 3.69px; }
+.speed-selected { background-color: #b95079; }
+.preview-screen { position: relative; width: 240px; height: 48px; margin-top: 3.69px; }
+.preview-panel { position: absolute; top: 0px; left: 0px; width: 240px; height: 48px; background-color: rgba(18,13,19,0.30); border-radius: 5.54px 5.54px 0px 0px; }
+.preview-name { position: absolute; top: 3.69px; left: 11.32px; color: #ffd8e6; font-size: 9.23px; font-weight: bold; }
+.preview-scroll { position: absolute; top: 16.62px; left: 0px; width: 240px; height: 29.54px; overflow: hidden; }
+.preview-dialogue { width: 240px; color: #ffffff; font-weight: bold; line-height: 13.85px; }
+.preview-dialogue-small { font-size: 9.23px; }
+.preview-dialogue-medium { font-size: 11.08px; line-height: 15.69px; }
+.preview-dialogue-large { font-size: 12.92px; line-height: 17.54px; }
+.actions { width: 208.3px; height: 60.92px; margin: 6.46px 15.85px 11.08px; flex-direction: column; align-items: center; }
+.primary-btn, .secondary-btn, .about-btn { width: 208.3px; height: 18px; line-height: 18px; color: #ffffff; font-size: 9.23px; font-weight: bold; text-align: center; border-radius: 4.15px; }
+.primary-btn { background-color: #b95079; }
+.secondary-btn, .about-btn { margin-top: 2.77px; background-color: #4a414b; }
+.back-btn { position: absolute; bottom: 3.69px; left: 43.02px; width: 153.96px; height: 17.54px; line-height: 17.54px; color: #ffffff; font-size: 8.31px; font-weight: bold; text-align: center; background-color: #302b33; border-radius: 4.62px; z-index: 8; }
+.footer-scrim { position: absolute; bottom: 0px; left: 0px; width: 240px; height: 29.54px; background-color: #17151a; z-index: 6; }
+.page { width: 240px; height: 240px; } .page-title { height: 31.93px; line-height: 31.93px; font-size: 16.48px; } .content { top: 36.05px; width: 240px; height: 170.99px; } .label, .slider, .hint { width: 175.11px; margin-left: 31.93px; } .label { height: 14.42px; line-height: 14.42px; font-size: 12.36px; } .slider { height: 16.48px; } .hint { height: 10.3px; line-height: 10.3px; font-size: 9.27px; } .size-label, .auto-label { margin-top: 2.06px; } .speed-row { width: 175.11px; height: 18.54px; margin-left: 31.93px; } .speed-option { width: 53.56px; height: 18.54px; line-height: 18.54px; font-size: 11.33px; border-radius: 5.15px; } .preview-screen, .preview-panel { width: 240px; height: 39.14px; } .preview-screen { margin-top: 2.06px; } .preview-name { top: 2.06px; left: 8.24px; font-size: 11.33px; } .preview-scroll { top: 16.48px; width: 240px; height: 20.6px; } .preview-dialogue { width: 240px; line-height: 11.33px; } .preview-dialogue-small { font-size: 9.27px; } .preview-dialogue-medium { font-size: 10.3px; line-height: 12.36px; } .preview-dialogue-large { font-size: 11.33px; line-height: 13.39px; } .actions { width: 175.11px; height: 81.37px; margin: 8.24px 31.93px 16.48px; flex-direction: column; } .primary-btn, .secondary-btn, .about-btn { width: 175.11px; height: 25.75px; line-height: 25.75px; font-size: 11.33px; border-radius: 5.15px; } .secondary-btn, .about-btn { margin-top: 2.06px; } .footer-scrim { width: 240px; height: 28.84px; } .back-btn { bottom: 3.09px; left: 29.87px; width: 180.26px; height: 25.75px; line-height: 25.75px; font-size: 11.33px; border-radius: 8.24px; }
+.person-single { top: 2px; bottom: auto; left: -20.4px; width: 280.8px; height: 360px; }
+.person-duo-left { top: 0px; bottom: auto; left: -64.8px; width: 259.2px; height: 360px; }
+.person-duo-right { top: 0px; bottom: auto; left: 64.8px; width: 259.2px; height: 360px; }
+.person-trio-left { top: 0px; bottom: auto; left: -69.6px; width: 240.0px; height: 342px; }
+.person-trio-center { top: 0px; bottom: auto; left: -4.8px; width: 240.0px; height: 342px; }
+.person-trio-right { top: 0px; bottom: auto; left: 64.8px; width: 240.0px; height: 342px; }
+</style>
+
