@@ -1,0 +1,14 @@
+{
+  "name": "小米手表S3",
+  "base": "环10",
+  "shape": "circle",
+  "physical": [
+    466,
+    466
+  ],
+  "css": [
+    233,
+    233
+  ],
+  "version": 17
+}

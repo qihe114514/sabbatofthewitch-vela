@@ -1,0 +1,20 @@
+{
+  "id": "小米手表S3",
+  "shape": "circle",
+  "physicalWidth": 466,
+  "physicalHeight": 466,
+  "designWidth": 233,
+  "designHeight": 233,
+  "characterCanvas": [
+    212,
+    520
+  ],
+  "background": [
+    466,
+    466
+  ],
+  "eventMax": [
+    466,
+    466
+  ]
+}

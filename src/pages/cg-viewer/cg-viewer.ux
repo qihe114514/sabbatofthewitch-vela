@@ -1,0 +1,223 @@
+<template>
+  <div class="page" @swipe="blockSystemBack">
+    <text class="page-title" if="{{controlsVisible}}">CG鉴赏</text>
+    <text class="caption" if="{{controlsVisible}}">{{caption}}</text>
+    <div class="viewer-stage" @touchstart="handleTouchStart" @touchmove="handleTouchMove" @touchend="handleTouchEnd" @swipe="blockSystemBack" @click="handleStageClick">
+      <scroll id="viewer-scroll" class="viewer-scroll" scroll-x="true" scroll-y="true" bounces="false" @swipe="blockSystemBack">
+        <div class="viewer-canvas" if="{{currentSrc}}" style="{{canvasStyle}}">
+          <image class="cg-image" src="{{currentSrc}}" style="{{imageStyle}}"></image>
+        </div>
+      </scroll>
+    </div>
+    <text class="empty" if="{{!currentSrc}}">暂无图像</text>
+    <text class="arrow arrow-left" if="{{controlsVisible}}" @click="showPrevious">&lt;</text>
+    <text class="arrow arrow-right" if="{{controlsVisible}}" @click="showNext">&gt;</text>
+    <div class="back-scrim" if="{{controlsVisible}}"></div>
+    <text class="back-btn" if="{{controlsVisible}}" @click="back">返回</text>
+  </div>
+</template>
+
+<script>
+import router from '@system.router'
+import prompt from '@system.prompt'
+import { getCgGroup } from '../../common/cg-catalog.js'
+
+const MIN_ZOOM = 1
+const ZOOM_DISTANCE = 160
+const SWIPE_THRESHOLD = 24
+
+function readTouch(event) {
+  const list = event && event.touches && event.touches.length ? event.touches : event && event.changedTouches
+  const touch = list && list[0]
+  if (!touch) return null
+  const x = touch.pageX !== undefined ? touch.pageX : (touch.clientX !== undefined ? touch.clientX : touch.x)
+  const y = touch.pageY !== undefined ? touch.pageY : (touch.clientY !== undefined ? touch.clientY : touch.y)
+  return { x: Number(x) || 0, y: Number(y) || 0 }
+}
+
+function clamp(value, min, max) { return Math.max(min, Math.min(max, Number(value) || 0)) }
+
+export default {
+  protected: { groupId: 'common', index: '0' },
+  private: {
+    group: null, currentIndex: 0, currentSrc: '', caption: '', warnedMissing: false, controlsVisible: true,
+    imageToken: 0, viewportWidth: 212, viewportHeight: 410, currentSize: [520, 291], baseImageWidth: 212, baseImageHeight: 119, maxZoom: 1,
+    zoomScale: 1, panX: 0, panY: 0, canvasStyle: { width: '212px', height: '410px' }, imageStyle: { width: '212px', height: '119px' }, touchActive: false, touchMoved: false, suppressClick: false,
+    touchAxis: '', touchStartX: 0, touchStartY: 0, touchStartScale: 1, touchStartPanX: 0, touchStartPanY: 0
+  },
+  onInit() {
+    this.group = getCgGroup(this.groupId)
+    const parsed = Number(this.index)
+    this.currentIndex = Number.isInteger(parsed) && parsed >= 0 ? parsed : 0
+    this.updateCurrent()
+  },
+  onShow() {
+    try {
+      const element = this.$element('viewer-scroll')
+      if (element && typeof element.getBoundingClientRect === 'function') element.getBoundingClientRect({ success: (rect) => {
+        this.viewportWidth = Number(rect.width) || this.viewportWidth
+        this.viewportHeight = Number(rect.height) || this.viewportHeight
+        this.updateCanvasStyle()
+        this.scrollToPan()
+      } })
+    } catch (error) {}
+  },
+  updateCurrent() {
+    if (!this.group || !this.group.items.length) {
+      this.currentSrc = ''
+      this.caption = '暂无图像'
+      return
+    }
+    this.currentIndex = (this.currentIndex + this.group.items.length) % this.group.items.length
+    const item = this.group.items[this.currentIndex]
+    // Use the single canonical landscape CG asset. Runtime rotation is
+    // intentionally avoided because some band firmware renders rotated
+    // images as a black frame.
+    const nextSrc = item.src || ''
+    this.currentSize = Array.isArray(item.size) && item.size.length === 2 ? item.size : [520, 291]
+    const token = ++this.imageToken
+    this.resetViewport()
+    this.currentSrc = ''
+    setTimeout(() => { if (token === this.imageToken) this.currentSrc = nextSrc }, 0)
+    this.caption = `${this.group.title} · ${item.title}`
+    if (!nextSrc && !this.warnedMissing) {
+      this.warnedMissing = true
+      prompt.showToast({ message: 'CG资源缺失' })
+    }
+  },
+  resetViewport() {
+    this.zoomScale = MIN_ZOOM
+    this.panX = 0
+    this.panY = 0
+    this.updateCanvasStyle()
+    setTimeout(() => this.scrollToPan(), 0)
+  },
+  updateCanvasStyle() {
+    const sourceWidth = Math.max(1, Number(this.currentSize[0]) || 520)
+    const sourceHeight = Math.max(1, Number(this.currentSize[1]) || 291)
+    const fit = Math.min(this.viewportWidth / sourceWidth, this.viewportHeight / sourceHeight)
+    this.baseImageWidth = Math.max(1, Math.round(sourceWidth * fit))
+    this.baseImageHeight = Math.max(1, Math.round(sourceHeight * fit))
+    this.maxZoom = Math.max(1, this.viewportHeight / this.baseImageHeight)
+    this.zoomScale = clamp(this.zoomScale, 1, this.maxZoom)
+    const imageWidth = Math.max(1, Math.round(this.baseImageWidth * this.zoomScale))
+    const imageHeight = Math.max(1, Math.round(this.baseImageHeight * this.zoomScale))
+    this.canvasStyle = { width: `${Math.max(this.viewportWidth, imageWidth)}px`, height: `${Math.max(this.viewportHeight, imageHeight)}px` }
+    this.imageStyle = { width: `${imageWidth}px`, height: `${imageHeight}px` }
+  },
+  clampPanX(value, scale = this.zoomScale) {
+    return clamp(value, 0, Math.max(0, Math.round(this.viewportWidth * scale - this.viewportWidth)))
+  },
+  clampPanY() {
+    return 0
+  },
+  applyZoomFromStart(scale) {
+    const next = clamp(scale, MIN_ZOOM, this.maxZoom)
+    const ratio = next / Math.max(MIN_ZOOM, this.touchStartScale)
+    const startCenterX = this.touchStartPanX + this.viewportWidth / 2
+    this.zoomScale = next
+    this.panX = this.clampPanX(startCenterX * ratio - this.viewportWidth / 2, next)
+    this.panY = 0
+    this.updateCanvasStyle()
+    this.scrollToPan()
+  },
+  scrollToPan() {
+    try {
+      const element = this.$element('viewer-scroll')
+      if (element && typeof element.scrollTo === 'function') element.scrollTo({ left: this.panX, top: 0, behavior: 'instant' })
+    } catch (error) {}
+  },
+  handleTouchStart(event) {
+    const touch = readTouch(event)
+    if (!touch) return
+    this.touchActive = true
+    this.touchMoved = false
+    this.suppressClick = false
+    this.touchAxis = ''
+    this.touchStartX = touch.x
+    this.touchStartY = touch.y
+    this.touchStartScale = this.zoomScale
+    this.touchStartPanX = this.panX
+    this.touchStartPanY = 0
+  },
+  handleTouchMove(event) {
+    if (!this.touchActive) return
+    const touch = readTouch(event)
+    if (!touch) return
+    const dx = touch.x - this.touchStartX
+    const dy = touch.y - this.touchStartY
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) this.touchMoved = true
+    if (!this.touchAxis && Math.max(Math.abs(dx), Math.abs(dy)) >= 8) this.touchAxis = Math.abs(dy) >= Math.abs(dx) ? 'vertical' : 'horizontal'
+    if (this.touchAxis === 'vertical') {
+      this.applyZoomFromStart(this.touchStartScale + (-dy / ZOOM_DISTANCE))
+    } else if (this.touchAxis === 'horizontal' && this.zoomScale > MIN_ZOOM) {
+      this.panX = this.clampPanX(this.touchStartPanX - dx)
+      this.scrollToPan()
+    }
+  },
+  handleTouchEnd(event) {
+    if (!this.touchActive) return
+    const touch = readTouch(event) || { x: this.touchStartX, y: this.touchStartY }
+    const dx = touch.x - this.touchStartX
+    const dy = touch.y - this.touchStartY
+    const moved = this.touchMoved
+    const axis = this.touchAxis
+    this.touchActive = false
+    this.suppressClick = moved
+    if (!moved || Math.max(Math.abs(dx), Math.abs(dy)) < SWIPE_THRESHOLD) return
+    if (axis === 'vertical') {
+      if (this.zoomScale < 1.03) this.applyZoomFromStart(MIN_ZOOM)
+      return
+    }
+    if (axis === 'horizontal' && this.zoomScale <= 1.03) {
+      if (dx < 0) this.showNext()
+      else this.showPrevious()
+    }
+  },
+  handleStageClick() {
+    if (this.suppressClick) {
+      this.suppressClick = false
+      return
+    }
+    this.controlsVisible = !this.controlsVisible
+  },
+  showPrevious() { this.suppressClick = true; if (!this.group || !this.group.items.length) return; this.currentIndex -= 1; this.updateCurrent() },
+  showNext() { this.suppressClick = true; if (!this.group || !this.group.items.length) return; this.currentIndex += 1; this.updateCurrent() },
+  blockSystemBack() {},
+  back() { router.back() }
+}
+</script>
+
+<style>
+
+.page { position: relative; width: 233px; height: 233px; overflow: hidden; background-color: #08070a; align-items: center; }
+.page-title { position: absolute; top: 0px; left: 0px; width: 233px; height: 14.34px; line-height: 14.34px; color: #ffffff; font-size: 9.86px; font-weight: bold; text-align: center; background-color: rgba(0,0,0,0.35); z-index: 4; }
+.caption { position: absolute; top: 15.23px; left: 0px; width: 233px; height: 8.96px; line-height: 8.96px; color: #f5e1e8; font-size: 5.83px; text-align: center; text-overflow: ellipsis; lines: 1; z-index: 4; }
+.viewer-stage { position: absolute; top: 25.99px; left: 0px; width: 233px; height: 183.71px; overflow: hidden; }
+.viewer-scroll { width: 233px; height: 183.71px; overflow: hidden; }
+.viewer-canvas { flex-shrink: 0; align-items: center; justify-content: center; }
+.cg-image { width: 100%; height: 100%; object-fit: contain; }
+.empty { position: absolute; top: 103.06px; width: 233px; color: #aaa1aa; font-size: 8.07px; text-align: center; }
+.arrow { position: absolute; width: 46.16px; height: 15.23px; line-height: 14.34px; color: #ffffff; font-size: 12.55px; font-weight: bold; text-align: center; background-color: rgba(0,0,0,0.70); border-radius: 4.48px; z-index: 5; }
+.arrow-left { top: 110.23px; left: 4.4px; }
+.arrow-right { top: 110.23px; left: 182.44px; }
+.back-scrim { position: absolute; bottom: 0.9px; left: 39.57px; width: 153.87px; height: 18.82px; background-color: #000000; border-radius: 4.48px; z-index: 4; }
+.back-btn { position: absolute; bottom: 2.69px; left: 41.76px; width: 149.47px; height: 17.03px; line-height: 17.03px; color: #ffffff; font-size: 8.07px; font-weight: bold; text-align: center; background-color: #302b33; border-radius: 4.48px; z-index: 5; }
+.page { width: 233px; height: 233px; }
+  .page-title { width: 233px; height: 27px; line-height: 27px; font-size: 16px; }
+  .caption { top: 28px; width: 233px; height: 12px; line-height: 12px; font-size: 9px; }
+  .viewer-stage { top: 43px; width: 233px; height: 156px; }
+  .viewer-scroll { width: 233px; height: 156px; }
+  .empty { top: 101px; width: 233px; font-size: 12px; }
+  .arrow { width: 24px; height: 22px; line-height: 20px; font-size: 20px; border-radius: 7px; }
+  .arrow-left { top: 110px; left: 4px; }
+  .arrow-right { top: 110px; left: 205px; }
+  .back-scrim { bottom: 1px; left: 27px; width: 179px; height: 29px; border-radius: 8px; }
+  .back-btn { bottom: 3px; left: 29px; width: 175px; height: 25px; line-height: 25px; font-size: 11px; border-radius: 8px; }
+.person-single { top: 2px; bottom: auto; left: -19.81px; width: 272.61px; height: 360px; }
+.person-duo-left { top: 0px; bottom: auto; left: -62.91px; width: 251.64px; height: 360px; }
+.person-duo-right { top: 0px; bottom: auto; left: 62.91px; width: 251.64px; height: 360px; }
+.person-trio-left { top: 0px; bottom: auto; left: -67.57px; width: 233.0px; height: 342px; }
+.person-trio-center { top: 0px; bottom: auto; left: -4.66px; width: 233.0px; height: 342px; }
+.person-trio-right { top: 0px; bottom: auto; left: 62.91px; width: 233.0px; height: 342px; }
+</style>
